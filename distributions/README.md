@@ -26,7 +26,7 @@ $ /bin/bash build-package.sh [platform...]
 
 Distributions will be placed under the `build-output` folder (should the folder not exist it will be automatically created).
 
-**Warning:** This folder also contains a file called `build-package-script.sh` file. **Do not execute it**, it's used internally by the build.
+**Warning:** **Do not execute** the `build-package-script.sh` file, it's used internally by the build.
 
 ## Supported Platforms
 
