@@ -167,11 +167,9 @@ echo "#!/bin/sh
 sudo mkdir -p /etc/kong
 sudo cp /usr/local/lib/luarocks/rocks/kong/$KONG_VERSION/conf/kong.yml /etc/kong/kong.yml" > $post_install_script
 
-# Find fpm
-#FPM="fpm"
-#if ! hash $FPM 2>/dev/null; then
-#  FPM=$(find / -type f -name "fpm" | head -1)
-#fi
+##############################################################
+#                      Build the package                     #
+##############################################################
 
 # Execute fpm
 cd $OUT
