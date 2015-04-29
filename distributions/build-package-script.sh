@@ -24,7 +24,7 @@ mkdir -p $OUT
 mkdir -p $TMP
 
 # Load dependencies versions
-source $DIR/versions.sh
+source $DIR/../versions.sh
 
 # Variables to be used in the build process
 PACKAGE_TYPE=""

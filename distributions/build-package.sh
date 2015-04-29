@@ -24,6 +24,11 @@ do
   fi
 done
 
+if [ ${#platforms_to_build[@]} -eq 0 ]; then
+  echo "Please specify an argument!"
+  exit 1
+fi
+
 echo "Building "$( IFS=$'\n'; echo "${platforms_to_build[*]}" )
 
 # Preparing environment
