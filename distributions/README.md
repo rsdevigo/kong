@@ -1,10 +1,11 @@
 # Building Kong distributions
 
-Kong can be distributed to different platforms like CentOS, Debian, Ubuntu and OS X. Here you find the scripts that will start the build process and output packages.
+Kong can be distributed to different platforms such as CentOS, Debian, Ubuntu and OS X. Here you find the scripts that will start the build process and output packages.
 
 # Requirements
 
-The build can only be started from OS X, and requires [Docker](https://www.docker.com/) to be available on the system.
+- OS X
+- [Docker](https://www.docker.com/)
 
 # Build
 
