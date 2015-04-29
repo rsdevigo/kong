@@ -9,7 +9,7 @@ nginx_tmp/
 kong*.yml
 
 # build
-build
+build-output
 
 # luacov
 luacov.*
