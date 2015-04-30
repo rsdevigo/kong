@@ -9,7 +9,11 @@ Kong can be distributed to different platforms such as CentOS, Debian, Ubuntu an
 
 # Build
 
-Help: `/bin/bash build-package.sh -h`
+- Help
+
+```shell
+/bin/bash build-package.sh -h
+```
 
 - Building for every platform:
 
