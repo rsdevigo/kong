@@ -1,27 +1,42 @@
 # Building Kong distributions
 
-Kong can be distributed to different platforms like CentOS, Debian, Ubuntu and OS X. Here you find the scripts that will start the build process and output packages.
+Kong can be distributed to different platforms such as CentOS, Debian, Ubuntu and OS X. Here you find the scripts that will start the build process and output packages.
 
 # Requirements
 
-The build can only be started from OS X, and requires [Docker](https://www.docker.com/) to be available on the system.
+- OS X
+- [Docker](https://www.docker.com/)
 
 # Build
 
-Run `/bin/bash build-package.sh -h` for help.
+Help: `/bin/bash build-package.sh -h`
 
-To start the build process for every distribution available execute:
-
-```shell
-/bin/bash build-package.sh -k KONG_TAG_OR_BRANCH -p PLATFORM
-```
-
-or you can selectively build only for specific platforms, like:
+- Building for every platform:
 
 ```shell
-/bin/bash build-package.sh -k KONG_TAG_OR_BRANCH -p osx centos:5 debian:8
+/bin/bash build-package.sh -k [KONG_TAG_OR_BRANCH] -p [PLATFORM]
 ```
 
-The output will be stored in `build-output` folder (the folder will be automatically created if not existing).
+- Building for specific platforms:
 
-**Note:** This folder also contains a file called `build-package-script.sh` file. **Don't execute it**, it's used internally by the build.
+```shell
+/bin/bash build-package.sh -k [KONG_TAG_OR_BRANCH] -p osx centos:5 debian:8
+```
+
+Distributions will be placed under the `build-output` folder (should the folder not exist it will be automatically created).
+
+**Warning:** **Do not execute** the `build-package-script.sh` file, it's used internally by the build.
+
+## Supported Platforms
+
+- `all`
+- `centos:5`
+- `centos:6`
+- `centos:7`
+- `debian:6`
+- `debian:7`
+- `debian:8`
+- `ubuntu:12.04.5`
+- `ubuntu:14.04.2`
+- `ubuntu:15.04`
+- `osx`
