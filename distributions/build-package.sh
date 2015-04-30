@@ -2,16 +2,69 @@
 
 set -o errexit
 
+##############################################################
+#                      Parse Arguments                       #
+##############################################################
+
+function usage {
+cat << EOF
+usage: $0 options
+
+This script build Kong in different distributions
+
+OPTIONS:
+ -h      Show this message
+ -k      Kong version to build
+ -p      Platforms to target
+ -t      Excute tests
+EOF
+}
+
+ARG_PLATFORMS=
+KONG_VERSION=
+TEST=
+while getopts “hk:p:t” OPTION
+do
+  case $OPTION in
+    h)
+      usage
+      exit 1
+      ;;
+    k)
+      KONG_VERSION=$OPTARG
+      ;;
+    p)
+      ARG_PLATFORMS=$OPTARG
+      ;;
+    t)
+      TEST=1
+      ;;
+    ?)
+      usage
+      exit
+      ;;
+  esac
+done
+
+if [[ -z $ARG_PLATFORMS ]] || [[ -z $KONG_VERSION ]]; then
+  usage
+  exit 1
+fi
+
 # Check system
 if ! [ "$(uname)" = "Darwin" ]; then
   echo "Run this script from OS X"
   exit 1
 fi
 
+##############################################################
+#                      Check Arguments                       #
+##############################################################
+
 supported_platforms=( centos:5 centos:6 centos:7 debian:6 debian:7 debian:8 ubuntu:12.04.5 ubuntu:14.04.2 ubuntu:15.04 osx )
 platforms_to_build=( )
 
-for var in "$@"
+for var in "$ARG_PLATFORMS"
 do
   if [[ "all" == "$var" ]]; then
     platforms_to_build=( "${supported_platforms[@]}" )
@@ -29,7 +82,11 @@ if [ ${#platforms_to_build[@]} -eq 0 ]; then
   exit 1
 fi
 
-echo "Building "$( IFS=$'\n'; echo "${platforms_to_build[*]}" )
+echo "Building Kong $KONG_VERSION: "$( IFS=$'\n'; echo "${platforms_to_build[*]}" )
+
+##############################################################
+#                        Start Build                         #
+##############################################################
 
 # Preparing environment
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
@@ -46,8 +103,10 @@ for i in "${platforms_to_build[@]}"
 do
   echo "Building for $i"
   if [[ "$i" == "osx" ]]; then
-    /bin/bash $DIR/build-package-script.sh
+    /bin/bash $DIR/build-package-script.sh ${KONG_VERSION}
   else
-    docker run -v $DIR/:/build-data $i /bin/bash /build-data/build-package-script.sh
+    docker run -v $DIR/:/build-data $i /bin/bash -c "/build-data/build-package-script.sh ${KONG_VERSION}"
   fi
 done
+
+echo "Build done"

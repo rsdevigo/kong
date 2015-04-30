@@ -1,12 +1,13 @@
 #!/bin/bash
 
-# Create "pkg": wget https://raw.githubusercontent.com/Mashape/kong/master/versions.sh --no-check-certificate && wget -O - https://raw.githubusercontent.com/Mashape/kong/master/package-build.sh --no-check-certificate | /bin/bash
-# Create "rpm": docker run centos:5 /bin/bash -c "yum -y install wget && wget https://raw.githubusercontent.com/Mashape/kong/master/versions.sh --no-check-certificate && wget -O - https://raw.githubusercontent.com/Mashape/kong/master/package-build.sh --no-check-certificate | /bin/bash"
-# Create "deb": docker run debian:6 /bin/bash -c "apt-get update && apt-get -y install wget && wget https://raw.githubusercontent.com/Mashape/kong/master/versions.sh --no-check-certificate && wget -O - https://raw.githubusercontent.com/Mashape/kong/master/package-build.sh --no-check-certificate | /bin/bash"
-
-# docker run -v $(pwd)/:/build-data centos:5 /bin/bash -c "/build-data/package-build.sh"
-
 set -o errexit
+
+# Check Kong version
+if [ -z "$1" ]; then
+  echo "Specify a Kong version"
+  exit 1
+fi
+KONG_VERSION=$1
 
 # Preparing environment
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
@@ -24,7 +25,10 @@ mkdir -p $OUT
 mkdir -p $TMP
 
 # Load dependencies versions
-source $DIR/../versions.sh
+LUA_VERSION=5.1.4
+PCRE_VERSION=8.36
+LUAROCKS_VERSION=2.2.2
+OPENRESTY_VERSION=1.7.10.2rc0
 
 # Variables to be used in the build process
 PACKAGE_TYPE=""
@@ -93,6 +97,14 @@ fi
 
 export PATH=$PATH:${OUT}/usr/local/bin:$(gem environment | awk -F': *' '/EXECUTABLE DIRECTORY/ {print $2}')
 
+# Check if the Kong version exists
+if ! [ `curl -s -o /dev/null -w "%{http_code}" https://github.com/Mashape/kong/tree/$KONG_VERSION` == "200" ]; then
+  echo "Kong version \"$KONG_VERSION\" doesn't exist!"
+  exit 1
+else
+  echo "Building Kong: $KONG_VERSION"
+fi
+
 # Install fpm
 gem install fpm
 
@@ -155,7 +167,15 @@ export LUAROCKS_CONFIG=$rocks_config
 export LUA_PATH=${OUT}/usr/local/share/lua/5.1/?.lua
 
 # Install Kong
-$OUT/usr/local/bin/luarocks install kong $KONG_VERSION
+cd $TMP
+git clone --branch $KONG_VERSION --depth 1 https://github.com/Mashape/kong.git
+cd kong
+$OUT/usr/local/bin/luarocks make kong-*.rockspec
+
+# Extract the version from the rockspec file
+rockspec_filename=`basename $TMP/kong/kong-*.rockspec`
+rockspec_basename=${rockspec_filename%.*}
+rockspec_version=${rockspec_basename#"kong-"}
 
 # Fix the Kong bin file
 sed -i.bak s@${OUT}@@g $OUT/usr/local/bin/kong
@@ -165,7 +185,7 @@ rm $OUT/usr/local/bin/kong.bak
 post_install_script=$(mktemp $MKTEMP_POSTSCRIPT_CONF)
 echo "#!/bin/sh
 sudo mkdir -p /etc/kong
-sudo cp /usr/local/lib/luarocks/rocks/kong/$KONG_VERSION/conf/kong.yml /etc/kong/kong.yml" > $post_install_script
+sudo cp /usr/local/lib/luarocks/rocks/kong/$rockspec_version/conf/kong.yml /etc/kong/kong.yml" > $post_install_script
 
 ##############################################################
 #                      Build the package                     #
