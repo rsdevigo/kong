@@ -16,13 +16,13 @@ OPTIONS:
  -h      Show this message
  -k      Kong version to build
  -p      Platforms to target
- -t      Excute tests
+ -t      Execute tests
 EOF
 }
 
 ARG_PLATFORMS=
 KONG_VERSION=
-TEST=
+TEST=false
 while getopts “hk:p:t” OPTION
 do
   case $OPTION in
@@ -37,7 +37,7 @@ do
       ARG_PLATFORMS=$OPTARG
       ;;
     t)
-      TEST=1
+      TEST=true
       ;;
     ?)
       usage
@@ -106,6 +106,24 @@ do
     /bin/bash $DIR/build-package-script.sh ${KONG_VERSION}
   else
     docker run -v $DIR/:/build-data $i /bin/bash -c "/build-data/build-package-script.sh ${KONG_VERSION}"
+  fi
+  if [ $? -ne 0 ]; then
+    exit 1
+  fi
+
+  # Check if tests are enabled, and execute them
+  if [[ $TEST == true ]]; then
+    echo "Testing $i"
+    last_file=$(ls -dt $DIR/build-output/* | head -1)
+    last_file_name=`basename $last_file`
+    if [[ "$i" == "osx" ]]; then
+      /bin/bash $DIR/test-package-script.sh $DIR/build-output/$last_file_name
+    else
+      docker run -v $DIR/:/build-data $i /bin/bash -c "/build-data/test-package-script.sh /build-data/build-output/$last_file_name"
+    fi
+    if [ $? -ne 0 ]; then
+      exit 1
+    fi
   fi
 done
 

@@ -184,8 +184,8 @@ rm $OUT/usr/local/bin/kong.bak
 # Copy the conf to /etc/kong
 post_install_script=$(mktemp $MKTEMP_POSTSCRIPT_CONF)
 echo "#!/bin/sh
-sudo mkdir -p /etc/kong
-sudo cp /usr/local/lib/luarocks/rocks/kong/$rockspec_version/conf/kong.yml /etc/kong/kong.yml" > $post_install_script
+mkdir -p /etc/kong
+cp /usr/local/lib/luarocks/rocks/kong/$rockspec_version/conf/kong.yml /etc/kong/kong.yml" > $post_install_script
 
 ##############################################################
 #                      Build the package                     #

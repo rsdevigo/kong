@@ -12,19 +12,19 @@ Kong can be distributed to different platforms such as CentOS, Debian, Ubuntu an
 - Help
 
 ```shell
-/bin/bash build-package.sh -h
+./build-package.sh -h
 ```
 
 - Building for every platform:
 
 ```shell
-/bin/bash build-package.sh -k [KONG_TAG_OR_BRANCH] -p [PLATFORM]
+./build-package.sh -k [KONG_TAG_OR_BRANCH] -p [PLATFORM] [-t]
 ```
 
 - Building for specific platforms:
 
 ```shell
-/bin/bash build-package.sh -k [KONG_TAG_OR_BRANCH] -p osx centos:5 debian:8
+./build-package.sh -k [KONG_TAG_OR_BRANCH] -p osx centos:5 debian:8 [-t]
 ```
 
 Distributions will be placed under the `build-output` folder (should the folder not exist it will be automatically created).
