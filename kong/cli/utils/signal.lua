@@ -87,7 +87,8 @@ local function prepare_nginx_working_dir(args_config)
   local nginx_config = kong_config.nginx
   local nginx_inject = {
     proxy_port = kong_config.proxy_port,
-    admin_api_port = kong_config.admin_api_port
+    admin_api_port = kong_config.admin_api_port,
+    dns_resolver = "127.0.0.1:"..kong_config.dnsmasq_port
   }
 
   -- Auto-tune
@@ -169,10 +170,12 @@ function _M.prepare_kong(args_config)
   -- Print important informations
   cutils.logger:info(string.format([[Proxy port.........%s
        Admin API port.....%s
+       dnsmasq port.......%s
        Database...........%s %s
   ]],
   kong_config.proxy_port,
   kong_config.admin_api_port,
+  kong_config.dnsmasq_port,
   kong_config.database,
   tostring(dao_config)))
 
@@ -205,6 +208,34 @@ function _M.send_signal(args_config, signal)
                             signal ~= nil and "-s "..signal or "")
 
   if not signal then signal = "start" end
+
+  -- Check dnsmasq
+  if signal == "start" then
+    local cmd = IO.cmd_exists("dnsmasq") and "dnsmasq" or 
+                (IO.cmd_exists("/usr/local/sbin/dnsmasq") and "/usr/local/sbin/dnsmasq" or nil) -- On OS X dnsmasq is at /usr/local/sbin/
+    if not cmd then
+      cutils.logger:warn("Can't find dnsmasq. Using default resolver address")
+    else
+      -- Kill it first
+      IO.os_execute("kill `cat "..constants.CLI.DNSMASQ_PID.."`")
+      local res, code = IO.os_execute(cmd.." -p "..kong_config.dnsmasq_port.." --pid-file="..constants.CLI.DNSMASQ_PID)
+      if code ~= 0 then
+        cutils.logger:error_exit(res)
+      else
+        cutils.logger:info("dnsmasq started")
+      end
+    end
+  end
+
+  if signal == "stop" then
+    -- Terminate dnsmasq
+    local _, code = IO.os_execute("kill `cat "..constants.CLI.DNSMASQ_PID.."`")
+    if code == 0 then
+      cutils.logger:info("dnsmasq stopped")
+    end
+  end
+
+  -- Check ulimit value
   if signal == "start" or signal == "restart" or signal == "reload" then
     local res, code = IO.os_execute("ulimit -n")
     if code == 0 and tonumber(res) < 4096 then
@@ -212,6 +243,7 @@ function _M.send_signal(args_config, signal)
     end
   end
 
+  -- Check settings for anonymous reports
   if kong_config.send_anonymous_reports then
     syslog.log({signal=signal})
   end

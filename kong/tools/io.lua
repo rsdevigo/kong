@@ -15,6 +15,11 @@ function _M.os_execute(command)
   return string.gsub(result, "[%\r%\n]", ""), exit_code / 256
 end
 
+function _M.cmd_exists(cmd)
+  local _, code = _M.os_execute("hash "..cmd)
+  return code == 0
+end
+
 function _M.read_file(path)
   local contents = nil
   local file = io.open(path, "rb")
