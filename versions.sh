@@ -1,5 +1,6 @@
 # Travis only
 CASSANDRA_VERSION=2.1.5
+DNSMASQ_VERSION=2.72
 
 # Travis and package builder
 LUAROCKS_VERSION=2.2.2

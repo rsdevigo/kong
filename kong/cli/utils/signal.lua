@@ -160,6 +160,17 @@ end
 
 local _M = {}
 
+-- Constants
+local START = "start"
+local RESTART = "restart"
+local RELOAD = "reload"
+local STOP = "stop"
+local QUIT = "quit"
+
+_M.RELOAD = RELOAD
+_M.STOP = STOP
+_M.QUIT = QUIT
+
 function _M.prepare_kong(args_config)
   local kong_config = get_kong_config(args_config)
   local dao_config = kong_config.databases_available[kong_config.database].properties
@@ -207,10 +218,10 @@ function _M.send_signal(args_config, signal)
                             constants.CLI.NGINX_PID,
                             signal ~= nil and "-s "..signal or "")
 
-  if not signal then signal = "start" end
+  if not signal then signal = START end
 
   -- Check dnsmasq
-  if signal == "start" then
+  if signal == START then
     local cmd = IO.cmd_exists("dnsmasq") and "dnsmasq" or 
                 (IO.cmd_exists("/usr/local/sbin/dnsmasq") and "/usr/local/sbin/dnsmasq" or nil) -- On OS X dnsmasq is at /usr/local/sbin/
     if not cmd then
@@ -227,7 +238,7 @@ function _M.send_signal(args_config, signal)
     end
   end
 
-  if signal == "stop" then
+  if signal == STOP then
     -- Terminate dnsmasq
     local _, code = IO.os_execute("kill `cat "..constants.CLI.DNSMASQ_PID.."`")
     if code == 0 then
@@ -236,7 +247,7 @@ function _M.send_signal(args_config, signal)
   end
 
   -- Check ulimit value
-  if signal == "start" or signal == "restart" or signal == "reload" then
+  if signal == START or signal == RESTART or signal == RELOAD then
     local res, code = IO.os_execute("ulimit -n")
     if code == 0 and tonumber(res) < 4096 then
       cutils.logger:warn("ulimit is currently set to \""..res.."\". For better performance set it to at least \"4096\" using \"ulimit -n\"")
