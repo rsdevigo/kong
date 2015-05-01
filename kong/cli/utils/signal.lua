@@ -228,9 +228,7 @@ function _M.send_signal(args_config, signal)
       cutils.logger:warn("Can't find dnsmasq. Using default resolver address")
     else
       -- Kill it first
-      if IO.file_exists(constants.CLI.DNSMASQ_PID) then
-        IO.os_execute("kill `cat "..constants.CLI.DNSMASQ_PID.."`")
-      end
+      IO.kill_process_by_pid_file(constants.CLI.DNSMASQ_PID)
       local res, code = IO.os_execute(cmd.." -p "..kong_config.dnsmasq_port.." --pid-file="..constants.CLI.DNSMASQ_PID)
       if code ~= 0 then
         cutils.logger:error_exit(res)
@@ -242,11 +240,9 @@ function _M.send_signal(args_config, signal)
 
   if signal == STOP then
     -- Terminate dnsmasq
-    if IO.file_exists(constants.CLI.DNSMASQ_PID) then
-      local _, code = IO.os_execute("kill `cat "..constants.CLI.DNSMASQ_PID.."`")
-      if code == 0 then
-        cutils.logger:info("dnsmasq stopped")
-      end
+    local _, code = IO.kill_process_by_pid_file(constants.CLI.DNSMASQ_PID)
+    if code and code == 0 then
+      cutils.logger:info("dnsmasq stopped")
     end
   end
 

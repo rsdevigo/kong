@@ -50,7 +50,7 @@ nginx_working_dir: /usr/local/kong/
 
 proxy_port: 8000
 admin_api_port: 8001
-dnsmasq_port: 8002
+dnsmasq_port: 8053
 
 # Specify the DAO to use
 database: cassandra

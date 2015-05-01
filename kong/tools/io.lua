@@ -6,6 +6,16 @@ local _M = {}
 
 _M.path = path
 
+function _M.file_exists(name)
+  local f = io.open(name, "r")
+  if f ~= nil then
+    io.close(f)
+    return true
+  else
+    return false
+  end
+end
+
 function _M.os_execute(command)
   local n = os.tmpname() -- get a temporary file name to store output
   local exit_code = os.execute("/bin/bash -c '"..command.." > "..n.." 2>&1'")
@@ -18,6 +28,24 @@ end
 function _M.cmd_exists(cmd)
   local _, code = _M.os_execute("hash "..cmd)
   return code == 0
+end
+
+-- Kills a process by PID and waits until it's terminated
+--
+-- @param {string} the pid to kill
+function _M.kill_process_by_pid(pid)
+  return _M.os_execute("kill "..pid.."; wait "..pid)
+end
+
+-- Kills a process by a PID file and waits until it's terminated
+--
+-- @param {string} the pid file path to kill
+function _M.kill_process_by_pid_file(pid_file)
+  if _M.file_exists(pid_file) then
+    local pid = _M.os_execute("cat "..pid_file)
+    return _M.kill_process_by_pid(pid)
+  end
+  return nil
 end
 
 function _M.read_file(path)
@@ -39,16 +67,6 @@ function _M.write_to_file(path, value)
   file:write(value)
   file:close()
   return true
-end
-
-function _M.file_exists(name)
-  local f = io.open(name, "r")
-  if f ~= nil then
-    io.close(f)
-    return true
-  else
-    return false
-  end
 end
 
 function _M.retrieve_files(dir, options)
