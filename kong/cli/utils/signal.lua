@@ -268,7 +268,11 @@ function _M.send_signal(args_config, signal)
     syslog.log({signal=signal})
   end
 
-  return os.execute(cmd) == 0
+  local success = os.execute(cmd) == 0
+  if signal == START and not success then
+    stop_dnsmasq()
+  end
+  return success
 end
 
 -- Test if Kong is already running by detecting a pid file.
