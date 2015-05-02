@@ -248,11 +248,11 @@ function _M.send_signal(args_config, signal)
   if not signal then signal = START end
 
   if signal == START then
-    --start_dnsmasq()
+    start_dnsmasq()
   end
 
   if signal == STOP then
-    --stop_dnsmasq()
+    stop_dnsmasq()
   end
 
   -- Check ulimit value
