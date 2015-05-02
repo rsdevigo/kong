@@ -155,8 +155,8 @@ local function prepare_database(args_config)
 end
 
 local function stop_dnsmasq()
-  -- Terminate dnsmasq
-  local _, code = IO.kill_process_by_pid_file(constants.CLI.DNSMASQ_PID)
+  -- Terminate dnsmasq aggressively
+  IO.os_execute("pkill -9 dnsmasq")
   if code and code == 0 then
     cutils.logger:info("dnsmasq stopped")
   end
