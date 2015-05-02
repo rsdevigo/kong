@@ -154,6 +154,33 @@ local function prepare_database(args_config)
   end
 end
 
+local function stop_dnsmasq()
+  -- Terminate dnsmasq
+  local _, code = IO.kill_process_by_pid_file(constants.CLI.DNSMASQ_PID)
+  if code and code == 0 then
+    cutils.logger:info("dnsmasq stopped")
+  end
+end
+
+local function start_dnsmasq()
+  local cmd = IO.cmd_exists("dnsmasq") and "dnsmasq" or 
+                (IO.cmd_exists("/usr/local/sbin/dnsmasq") and "/usr/local/sbin/dnsmasq" or nil) -- On OS X dnsmasq is at /usr/local/sbin/
+  if not cmd then
+    cutils.logger:error_exit("Can't find dnsmasq")
+  end
+
+  -- Kill it first, just in case was running
+  stop_dnsmasq()
+
+  -- Start the dnsmasq
+  local res, code = IO.os_execute(cmd.." -p "..kong_config.dnsmasq_port.." --pid-file="..constants.CLI.DNSMASQ_PID)
+  if code ~= 0 then
+    cutils.logger:error_exit(res)
+  else
+    cutils.logger:info("dnsmasq started")
+  end
+end
+
 --
 -- PUBLIC
 --
@@ -220,30 +247,12 @@ function _M.send_signal(args_config, signal)
 
   if not signal then signal = START end
 
-  -- Check dnsmasq
   if signal == START then
-    local cmd = IO.cmd_exists("dnsmasq") and "dnsmasq" or 
-                (IO.cmd_exists("/usr/local/sbin/dnsmasq") and "/usr/local/sbin/dnsmasq" or nil) -- On OS X dnsmasq is at /usr/local/sbin/
-    if not cmd then
-      cutils.logger:warn("Can't find dnsmasq. Using default resolver address")
-    else
-      -- Kill it first
-      IO.kill_process_by_pid_file(constants.CLI.DNSMASQ_PID)
-      local res, code = IO.os_execute(cmd.." -p "..kong_config.dnsmasq_port.." --pid-file="..constants.CLI.DNSMASQ_PID)
-      if code ~= 0 then
-        cutils.logger:error_exit(res)
-      else
-        cutils.logger:info("dnsmasq started")
-      end
-    end
+    --start_dnsmasq()
   end
 
   if signal == STOP then
-    -- Terminate dnsmasq
-    local _, code = IO.kill_process_by_pid_file(constants.CLI.DNSMASQ_PID)
-    if code and code == 0 then
-      cutils.logger:info("dnsmasq stopped")
-    end
+    --stop_dnsmasq()
   end
 
   -- Check ulimit value
