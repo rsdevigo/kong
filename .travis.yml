@@ -21,4 +21,4 @@ install:
 
 script: "busted --coverage spec/"
 
-after_success: "cat nginx_tmp/logs/error.log"
+after_script: "cat nginx_tmp/logs/error.log"
