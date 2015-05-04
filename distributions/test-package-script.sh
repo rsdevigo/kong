@@ -18,6 +18,7 @@ if [ "$(uname)" = "Darwin" ]; then
   sudo /usr/sbin/installer -pkg $PACKAGE_FILE -target /
   SUDO="sudo"
 elif hash yum 2>/dev/null; then
+  yum install -y epel-release
   yum install -y $PACKAGE_FILE --nogpgcheck
 elif hash apt-get 2>/dev/null; then
   apt-get update

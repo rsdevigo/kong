@@ -59,6 +59,7 @@ elif hash yum 2>/dev/null; then
   yum -y install wget tar make curl ldconfig gcc perl pcre-devel openssl-devel ldconfig unzip git rpm-build ncurses-devel which lua-$LUA_VERSION lua-devel-$LUA_VERSION gpg
 
   CENTOS_VERSION=`cat /etc/redhat-release | grep -oE '[0-9]+\.[0-9]+'`
+  FPM_PARAMS="-d epel-release -d sudo -d nc -d 'lua = $LUA_VERSION' -d openssl -d pcre"
 
   # Install Ruby for fpm
   if [[ ${CENTOS_VERSION%.*} == "5" ]]; then
@@ -72,11 +73,11 @@ elif hash yum 2>/dev/null; then
     gem update --system
   else
     yum -y install ruby ruby-devel rubygems
+    FPM_PARAMS=$FPM_PARAMS" -d openssl098e"
   fi
 
   PACKAGE_TYPE="rpm"
   LUA_MAKE="linux"
-  FPM_PARAMS="-d epel-release -d sudo -d nc -d 'lua = $LUA_VERSION' -d openssl -d pcre -d openssl098e"
   FINAL_FILE_NAME="kong-${KONG_VERSION/-/_}.el${CENTOS_VERSION%.*}.noarch.rpm"
 elif hash apt-get 2>/dev/null; then
   apt-get update && apt-get -y install wget curl gnupg tar make gcc libreadline-dev libncurses5-dev libpcre3-dev libssl-dev perl unzip git lua${LUA_VERSION%.*} liblua${LUA_VERSION%.*}-0-dev lsb-release ruby ruby-dev
