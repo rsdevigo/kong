@@ -154,15 +154,15 @@ local function prepare_database(args_config)
   end
 end
 
-local function stop_dnsmasq()
+local function stop_dnsmasq(kong_config)
   -- Terminate dnsmasq aggressively
-  local _, code = IO.kill_process_by_pid_file(constants.CLI.DNSMASQ_PID, 9)
+  local _, code = IO.kill_process_by_pid_file(IO.path:join(kong_config.nginx_working_dir, constants.CLI.DNSMASQ_PID), 9)
   if code and code == 0 then
     cutils.logger:info("dnsmasq stopped")
   end
 end
 
-local function start_dnsmasq()
+local function start_dnsmasq(kong_config)
   local cmd = IO.cmd_exists("dnsmasq") and "dnsmasq" or 
                 (IO.cmd_exists("/usr/local/sbin/dnsmasq") and "/usr/local/sbin/dnsmasq" or nil) -- On OS X dnsmasq is at /usr/local/sbin/
   if not cmd then
@@ -170,10 +170,10 @@ local function start_dnsmasq()
   end
 
   -- Kill it first, just in case was running
-  stop_dnsmasq()
+  stop_dnsmasq(kong_config)
 
   -- Start the dnsmasq
-  local res, code = IO.os_execute(cmd.." -p "..kong_config.dnsmasq_port.." --pid-file="..constants.CLI.DNSMASQ_PID)
+  local res, code = IO.os_execute(cmd.." -p "..kong_config.dnsmasq_port.." --pid-file="..IO.path:join(kong_config.nginx_working_dir, constants.CLI.DNSMASQ_PID))
   if code ~= 0 then
     cutils.logger:error_exit(res)
   else
@@ -248,11 +248,11 @@ function _M.send_signal(args_config, signal)
   if not signal then signal = START end
 
   if signal == START then
-    start_dnsmasq()
+    start_dnsmasq(kong_config)
   end
 
   if signal == STOP then
-    stop_dnsmasq()
+    stop_dnsmasq(kong_config)
   end
 
   -- Check ulimit value
@@ -270,7 +270,7 @@ function _M.send_signal(args_config, signal)
 
   local success = os.execute(cmd) == 0
   if signal == START and not success then
-    stop_dnsmasq()
+    stop_dnsmasq(kong_config)
   end
   return success
 end
