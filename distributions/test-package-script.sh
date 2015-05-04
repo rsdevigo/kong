@@ -22,8 +22,7 @@ elif hash yum 2>/dev/null; then
   yum install -y $PACKAGE_FILE --nogpgcheck
 elif hash apt-get 2>/dev/null; then
   apt-get update
-  dpkg -i $PACKAGE_FILE
-  apt-get install -f
+  dpkg -i $PACKAGE_FILE || apt-get install -f
 else
   echo "Unsupported platform"
   exit 1
