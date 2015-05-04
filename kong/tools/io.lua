@@ -38,17 +38,6 @@ function _M.kill_process_by_pid(pid, signal)
   return _M.os_execute("kill "..(signal and "-"..tostring(signal).." " or "")..pid)
 end
 
--- Kills a process by a PID file and waits until it's terminated
---
--- @param {string} the pid file path to kill
-function _M.kill_process_by_pid_file(pid_file, signal)
-  if _M.file_exists(pid_file) then
-    local pid = _M.os_execute("cat "..pid_file)
-    return _M.kill_process_by_pid(pid, signal)
-  end
-  return nil
-end
-
 function _M.read_file(path)
   local contents = nil
   local file = io.open(path, "rb")

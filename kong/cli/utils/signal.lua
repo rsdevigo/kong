@@ -155,10 +155,17 @@ local function prepare_database(args_config)
 end
 
 local function stop_dnsmasq(kong_config)
-  -- Terminate dnsmasq aggressively
-  local _, code = IO.kill_process_by_pid_file(IO.path:join(kong_config.nginx_working_dir, constants.CLI.DNSMASQ_PID), 9)
-  if code and code == 0 then
-    cutils.logger:info("dnsmasq stopped")
+  local pid_file = IO.path:join(kong_config.nginx_working_dir, constants.CLI.DNSMASQ_PID)
+  if IO.file_exists(pid_file) then
+    local res, code = IO.os_execute("cat "..pid_file)
+    if code == 0 then
+      local _, kill_code = IO.kill_process_by_pid(res, 9)
+      if kill_code and kill_code == 0 then
+        cutils.logger:info("dnsmasq stopped")
+      end
+    else
+      cutils.logger:error_exit(res)
+    end
   end
 end
 
