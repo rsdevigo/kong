@@ -19,6 +19,6 @@ install:
   - sudo make install
   - sudo make dev
 
-script: "busted --coverage spec/"
+script: "busted --coverage spec/integration/cli"
 
 after_script: "cat nginx_tmp/logs/error.log"
