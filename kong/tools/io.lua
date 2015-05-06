@@ -35,7 +35,7 @@ end
 -- @param {string} the pid to kill
 function _M.kill_process_by_pid(pid, signal)
   print("kill "..(signal and "-"..tostring(signal).." " or "")..pid.." && wait "..pid)
-  return _M.os_execute("kill "..(signal and "-"..tostring(signal).." " or "")..pid)
+  return _M.os_execute("kill "..(signal and "-"..tostring(signal).." " or "")..pid.." && wait "..pid)
 end
 
 function _M.read_file(path)
