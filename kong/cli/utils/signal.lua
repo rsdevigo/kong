@@ -156,8 +156,10 @@ end
 
 local function stop_dnsmasq(kong_config)
   local pid_file = IO.path:join(kong_config.nginx_working_dir, constants.CLI.DNSMASQ_PID)
+  print(pid_file)
   if IO.file_exists(pid_file) then
     local res, code = IO.os_execute("cat "..pid_file)
+    print(res)
     if code == 0 then
       local _, kill_code = IO.kill_process_by_pid(res, 9)
       if kill_code and kill_code == 0 then
@@ -175,9 +177,6 @@ local function start_dnsmasq(kong_config)
   if not cmd then
     cutils.logger:error_exit("Can't find dnsmasq")
   end
-
-  -- Kill it first, just in case was running
-  stop_dnsmasq(kong_config)
 
   -- Start the dnsmasq
   local res, code = IO.os_execute(cmd.." -p "..kong_config.dnsmasq_port.." --pid-file="..IO.path:join(kong_config.nginx_working_dir, constants.CLI.DNSMASQ_PID))
@@ -255,6 +254,7 @@ function _M.send_signal(args_config, signal)
   if not signal then signal = START end
 
   if signal == START then
+    stop_dnsmasq(kong_config)
     start_dnsmasq(kong_config)
   end
 
