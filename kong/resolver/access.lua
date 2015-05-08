@@ -38,9 +38,14 @@ end
 
 -- Retrieve the API from the Host that has been requested
 function _M.execute(conf)
+
   local hosts = ngx.req.get_headers()["host"] -- Multiple "Host" can have been requested
   if type(hosts) == "string" then
-    hosts = { hosts }
+    if hosts == ngx.var.host..":"..ngx.var.server_port then
+      hosts = { stringy.split(ngx.var.request_uri, "/")[2] }
+    else
+      hosts = { hosts }
+    end
   elseif not hosts then
     hosts = {}
   end
@@ -65,7 +70,12 @@ function _M.execute(conf)
   end
 
   -- Setting the backend URL for the proxy_pass directive
-  ngx.var.backend_url = get_backend_url(api)..ngx.var.request_uri
+  local hosts = ngx.req.get_headers()["host"]
+  if type(hosts) == "string" and hosts == ngx.var.host..":"..ngx.var.server_port then
+    ngx.var.backend_url = get_backend_url(api).."/"..table.concat(stringy.split(ngx.var.request_uri, "/"), ",", 3)
+  else
+    ngx.var.backend_url = get_backend_url(api)..ngx.var.request_uri
+  end
 
   ngx.req.set_header("host", get_host_from_url(ngx.var.backend_url))
 
