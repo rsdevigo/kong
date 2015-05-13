@@ -72,7 +72,7 @@ function _M.execute(conf)
   -- Setting the backend URL for the proxy_pass directive
   local hosts = ngx.req.get_headers()["host"]
   if type(hosts) == "string" and hosts == ngx.var.host..":"..ngx.var.server_port then
-    ngx.var.backend_url = get_backend_url(api).."/"..table.concat(stringy.split(ngx.var.request_uri, "/"), ",", 3)
+    ngx.var.backend_url = get_backend_url(api).."/"..table.concat(stringy.split(ngx.var.request_uri, "/"), "/", 3)
   else
     ngx.var.backend_url = get_backend_url(api)..ngx.var.request_uri
   end
