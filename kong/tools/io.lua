@@ -1,10 +1,21 @@
-local constants = require "kong.constants"
-local path = require("path").new("/")
 local yaml = require "yaml"
+local path = require("path").new("/")
+local stringy = require "stringy"
+local constants = require "kong.constants"
 
 local _M = {}
 
 _M.path = path
+
+function _M.file_exists(path)
+  local f, err = io.open(path, "r")
+  if f ~= nil then
+    io.close(f)
+    return true
+  else
+    return false, err
+  end
+end
 
 function _M.os_execute(command)
   local n = os.tmpname() -- get a temporary file name to store output
@@ -13,6 +24,19 @@ function _M.os_execute(command)
   os.remove(n)
 
   return string.gsub(result, "[%\r%\n]", ""), exit_code / 256
+end
+
+function _M.cmd_exists(cmd)
+  local _, code = _M.os_execute("hash "..cmd)
+  return code == 0
+end
+
+-- Kill a process by PID and wait until it's terminated
+-- @param `pid` the pid to kill
+function _M.kill_process_by_pid(pid)
+  local res, code = _M.os_execute("kill "..pid)
+  _M.os_execute("wait "..pid)
+  return res, code
 end
 
 function _M.read_file(path)
@@ -36,30 +60,29 @@ function _M.write_to_file(path, value)
   return true
 end
 
-function _M.file_exists(name)
-  local f = io.open(name, "r")
-  if f ~= nil then
-    io.close(f)
-    return true
-  else
-    return false
-  end
-end
-
 function _M.retrieve_files(dir, options)
   local fs = require "luarocks.fs"
   local pattern = options.file_pattern
-  local exclude_dir_pattern = options.exclude_dir_pattern
+  local exclude_dir_patterns = options.exclude_dir_patterns
 
   if not pattern then pattern = "" end
-  if not exclude_dir_pattern then exclude_dir_pattern = "" end
+  if not exclude_dir_patterns then exclude_dir_patterns = {} end
   local files = {}
 
   local function tree(dir)
     for _, file in ipairs(fs.list_dir(dir)) do
       local f = path:join(dir, file)
-      if fs.is_dir(f) and string.match(f, exclude_dir_pattern) == nil then
-        tree(f)
+      if fs.is_dir(f) then
+        local is_ignored = false
+        for _, pattern in ipairs(exclude_dir_patterns) do
+          if string.match(f, pattern) then
+            is_ignored = true
+            break
+          end
+        end
+        if not is_ignored then
+          tree(f)
+        end
       elseif fs.is_file(f) and string.match(file, pattern) ~= nil then
         table.insert(files, f)
       end
@@ -90,6 +113,13 @@ function _M.load_configuration_and_dao(configuration_path)
 
   -- Alias the DAO configuration we are using for this instance for easy access
   configuration.dao_config = dao_config
+
+  -- Load absolute path for the nginx working directory
+  if not stringy.startswith(configuration.nginx_working_dir, "/") then
+    -- It's a relative path, convert it to absolute
+    local fs = require "luarocks.fs"
+    configuration.nginx_working_dir = fs.current_dir().."/"..configuration.nginx_working_dir
+  end
 
   -- Instanciate the DAO Factory along with the configuration
   local DaoFactory = require("kong.dao."..configuration.database..".factory")

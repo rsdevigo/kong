@@ -12,20 +12,22 @@ description = {
 }
 dependencies = {
   "lua ~> 5.1",
+  "luasec ~> 0.5-2",
 
   "uuid ~> 0.2-1",
   "luatz ~> 0.3-1",
   "yaml ~> 1.1.1-1",
-  "luasec ~> 0.5-2",
   "lapis ~> 1.1.0-1",
   "stringy ~> 0.4-1",
   "cassandra ~> 0.5-7",
+  "multipart ~> 0.1-3",
   "lua-path ~> 0.2.3-1",
   "lua-cjson ~> 2.1.0-1",
-  "luasocket ~> 2.0.2-5",
   "ansicolors ~> 1.0.2-3",
+
+  "luasocket ~> 2.0.2-5",
   "lrexlib-pcre ~> 2.7.2-1",
-  "multipart ~> 0.1-2"
+  "lua-llthreads2 ~> 0.1.3-1"
 }
 build = {
   type = "builtin",
@@ -49,15 +51,17 @@ build = {
     ["kong.cli.version"] = "kong/cli/version.lua",
     ["kong.cli.migrations"] = "kong/cli/migrations.lua",
 
-    ["kong.tools.utils"] = "kong/tools/utils.lua",
     ["kong.tools.io"] = "kong/tools/io.lua",
-    ["kong.tools.syslog"] = "kong/tools/syslog.lua",
-    ["kong.tools.migrations"] = "kong/tools/migrations.lua",
+    ["kong.tools.utils"] = "kong/tools/utils.lua",
     ["kong.tools.faker"] = "kong/tools/faker.lua",
-    ["kong.tools.database_cache"] = "kong/tools/database_cache.lua",
-    ["kong.tools.timestamp"] = "kong/tools/timestamp.lua",
+    ["kong.tools.syslog"] = "kong/tools/syslog.lua",
+    ["kong.tools.ngx_stub"] = "kong/tools/ngx_stub.lua",
     ["kong.tools.printable"] = "kong/tools/printable.lua",
+    ["kong.tools.responses"] = "kong/tools/responses.lua",
+    ["kong.tools.timestamp"] = "kong/tools/timestamp.lua",
+    ["kong.tools.migrations"] = "kong/tools/migrations.lua",
     ["kong.tools.http_client"] = "kong/tools/http_client.lua",
+    ["kong.tools.database_cache"] = "kong/tools/database_cache.lua",
 
     ["kong.resolver.handler"] = "kong/resolver/handler.lua",
     ["kong.resolver.access"] = "kong/resolver/access.lua",
