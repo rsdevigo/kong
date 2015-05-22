@@ -41,6 +41,7 @@ end
 function _M.execute(conf)
 
   local hosts = ngx.req.get_headers()["host"] -- Multiple "Host" can have been requested
+
   if type(hosts) == "string" then
     if hosts == ngx.var.host..":"..ngx.var.server_port then
       hosts = { stringy.split(ngx.var.request_uri, "/")[2] }
@@ -50,9 +51,9 @@ function _M.execute(conf)
   elseif not hosts then
     hosts = {}
   end
-
-  -- Find the API
   local api = nil
+  -- Find the API
+  
   for _, host in ipairs(hosts) do
     api = cache.get_and_set(cache.api_key(host), function()
       local apis, err = dao.apis:find_by_keys { public_dns = host }
