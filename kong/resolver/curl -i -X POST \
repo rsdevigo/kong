@@ -1,0 +1,20 @@
+curl -i -X POST \
+   --url http://localhost:8001/plugins_configurations/ \
+   --data 'name=sigfapauth' \
+   --data 'api_id=7825bd44-9746-4c1d-ccd5-d0a439befe72' \
+   --data 'value.key_names=apikey'
+
+curl -i -X POST \
+   --url http://localhost:8001/apis/ \
+   --data 'name=sigfap' \
+   --data 'target_url=http://200.129.206.94:81' \
+   --data 'public_dns=sigfap.api'
+
+curl -i -X GET \
+	--url http://localhost:8000/sigfap.api/echo \
+	--header 'x-sigfap-auth-api-time: aushduashduahs' \
+   --header 'x-sigfap-auth-api-level: 3' \
+   --header 'x-sigfap-auth-app-signature: aushduashduahs' \
+   --header 'x-sigfap-auth-app-key: aushduashduahs' \
+   --header 'x-sigfap-auth-user-signature: aushduashduahs' \
+   --header 'x-sigfap-auth-user-key: aushduashduahs'
