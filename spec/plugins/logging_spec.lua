@@ -14,17 +14,29 @@ local TEST_CONF = "kong_TEST.yml"
 
 local TCP_PORT = 7777
 local UDP_PORT = 8888
+local HTTP_PORT = 8989
 
 describe("Logging Plugins", function()
 
   setup(function()
     spec_helper.prepare_db()
+    spec_helper.insert_fixtures {
+      api = {
+        { name = "tests logging", public_dns = "logging.com", target_url = "http://mockbin.com" }
+      },
+      plugin_configuration = {
+        { name = "tcplog", value = { host = "127.0.0.1", port = 7777 }, __api = 1 },
+        { name = "udplog", value = { host = "127.0.0.1", port = 8888 }, __api = 1 },
+        { name = "httplog", value = { http_endpoint = "http://localhost:"..HTTP_PORT, method = "POST"}, __api = 1 },
+        { name = "filelog", value = {}, __api = 1 }
+      }
+    }
+
     spec_helper.start_kong()
   end)
 
   teardown(function()
     spec_helper.stop_kong()
-    spec_helper.reset_db()
   end)
 
   describe("Invalid API", function()
@@ -33,7 +45,7 @@ describe("Logging Plugins", function()
       local thread = spec_helper.start_tcp_server(TCP_PORT) -- Starting the mock TCP server
 
       -- Making the request
-      local response, status, headers = http_client.get(STUB_GET_URL, nil, { host = "logging.com" })
+      local _, status = http_client.get(STUB_GET_URL, nil, { host = "logging.com" })
       assert.are.equal(200, status)
 
       -- Getting back the TCP server input
@@ -50,7 +62,7 @@ describe("Logging Plugins", function()
       local thread = spec_helper.start_udp_server(UDP_PORT) -- Starting the mock TCP server
 
       -- Making the request
-      local response, status = http_client.get(STUB_GET_URL, nil, { host = "logging.com" })
+      local _, status = http_client.get(STUB_GET_URL, nil, { host = "logging.com" })
       assert.are.equal(200, status)
 
       -- Getting back the TCP server input
@@ -63,11 +75,29 @@ describe("Logging Plugins", function()
       assert.are.same("127.0.0.1", log_message.ip)
     end)
 
+    it("should log to Http", function()
+      local thread = spec_helper.start_http_server(HTTP_PORT) -- Starting the mock TCP server
+
+      -- Making the request
+      local _, status = http_client.get(STUB_GET_URL, nil, { host = "logging.com" })
+      assert.are.equal(200, status)
+
+      -- Getting back the TCP server input
+      local ok, res = thread:join()
+      assert.truthy(ok)
+      assert.truthy(res)
+
+      -- Making sure it's alright
+      assert.are.same("POST / HTTP/1.1", res[1])
+      local log_message = cjson.decode(res[7])
+      assert.are.same("127.0.0.1", log_message.ip)
+    end)
+
     it("should log to file", function()
       local uuid = string.gsub(uuid(), "-", "")
 
       -- Making the request
-      local response, status = http_client.get(STUB_GET_URL, nil,
+      local _, status = http_client.get(STUB_GET_URL, nil,
         { host = "logging.com", file_log_uuid = uuid }
       )
       assert.are.equal(200, status)

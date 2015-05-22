@@ -43,17 +43,31 @@ function _M.validate(t, schema, is_update)
       else
         t[column] = v.default
       end
+    elseif is_update and t[column] ~= nil and v.immutable and not v.required then
+      -- is_update check immutability of a field
+      errors = utils.add_error(errors, column, column.." cannot be updated")
+    end
 
-    -- Check required fields are set
-    elseif v.required and (t[column] == nil or t[column] == "") then
-      errors = utils.add_error(errors, column, column.." is required")
-
-    -- Check type if valid
-    elseif v.type ~= nil and t[column] ~= nil and type(t[column]) ~= _M.get_type(v.type) and LUA_TYPES[v.type] then
-      errors = utils.add_error(errors, column, column.." is not a "..v.type)
+    -- Check if type is valid boolean and numbers as strings are accepted and converted
+    if v.type ~= nil and t[column] ~= nil then
+      local valid
+      if _M.get_type(v.type) == "number" and type(t[column]) == "string" then -- a number can also be sent as a string
+        t[column] = tonumber(t[column])
+        valid = t[column] ~= nil
+      elseif _M.get_type(v.type) == "boolean" and type(t[column]) == "string" then
+        local bool = t[column]:lower()
+        valid = bool == "true" or bool == "false"
+        t[column] = bool == "true"
+      else
+        valid = type(t[column]) == _M.get_type(v.type)
+      end
+      if not valid and LUA_TYPES[v.type] then
+        errors = utils.add_error(errors, column, column.." is not a "..v.type)
+      end
+    end
 
     -- Check type if value is allowed in the enum
-    elseif v.enum and t[column] ~= nil then
+    if v.enum and t[column] ~= nil then
       local found = false
       for _, allowed in ipairs(v.enum) do
         if allowed == t[column] then
@@ -65,26 +79,17 @@ function _M.validate(t, schema, is_update)
       if not found then
         errors = utils.add_error(errors, column, string.format("\"%s\" is not allowed. Allowed values are: \"%s\"", t[column], table.concat(v.enum, "\", \"")))
       end
+    end
 
     -- Check field against a regex if specified
-    elseif t[column] ~= nil and v.regex then
+    if t[column] ~= nil and v.regex then
       if not ngx.re.match(t[column], v.regex) then
         errors = utils.add_error(errors, column, column.." has an invalid value")
       end
-
-    -- Check field against a custom function
-    elseif v.func and type(v.func) == "function" then
-      local ok, err = v.func(t[column], t)
-      if not ok or err then
-        errors = utils.add_error(errors, column, err)
-      end
-
-    -- is_update check immutability of a field
-    elseif is_update and t[column] ~= nil and v.immutable and not v.required then
-      errors = utils.add_error(errors, column, column.." cannot be updated")
+    end
 
     -- validate a subschema
-    elseif t[column] ~= nil and v.schema then
+    if v.schema then
       local sub_schema, err
       if type(v.schema) == "function" then
         sub_schema, err = v.schema(t)
@@ -95,13 +100,41 @@ function _M.validate(t, schema, is_update)
       if err then
         -- could not retrieve sub schema
         errors = utils.add_error(errors, column, err)
-      else
-        -- validating subschema
-        local s_ok, s_errors = _M.validate(t[column], sub_schema, is_update)
-        if not s_ok then
-          for s_k, s_v in pairs(s_errors) do
-            errors = utils.add_error(errors, column.."."..s_k, s_v)
+      end
+
+      if sub_schema then
+        for k, v in pairs(sub_schema) do
+          if v.default and t[column] == nil then
+            t[column] = {}
+            break
           end
+        end
+
+        if t[column] then
+          -- validating subschema
+          local s_ok, s_errors = _M.validate(t[column], sub_schema, is_update)
+          if not s_ok then
+            for s_k, s_v in pairs(s_errors) do
+              errors = utils.add_error(errors, column.."."..s_k, s_v)
+            end
+          end
+        end
+      end
+    end
+
+    -- Check required fields are set
+    if v.required and (t[column] == nil or t[column] == "") then
+      errors = utils.add_error(errors, column, column.." is required")
+    end
+
+    -- Check field against a custom function
+    if v.func and type(v.func) == "function" then
+      local ok, err, new_fields = v.func(t[column], t)
+      if not ok or err then
+        errors = utils.add_error(errors, column, err)
+      elseif new_fields then
+        for k, v in pairs(new_fields) do
+          t[k] = v
         end
       end
     end
